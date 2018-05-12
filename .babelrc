@@ -1,0 +1,19 @@
+{
+  "presets": [
+    "flow",
+    [
+      "env",
+      {
+        "targets": {
+          "node": "current"
+        }
+      }
+    ]
+  ],
+  "plugins": [
+    "syntax-trailing-function-commas",
+    "syntax-async-functions",
+    "transform-object-rest-spread",
+    "transform-class-properties"
+  ]
+}
