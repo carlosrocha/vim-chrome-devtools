@@ -3,7 +3,9 @@
 This plugin uses [chrome-remote-interface](https://github.com/cyrus-and/chrome-remote-interface)
 to connect to your Google Chrome instance.
 
-![CSS reload](https://user-images.githubusercontent.com/312351/39974298-73a352ea-56ed-11e8-88a3-9e4846ac6cae.gif)
+![CSS reload](https://user-images.githubusercontent.com/312351/39975780-335638a2-56f6-11e8-945a-128fe59fa76c.gif)
+
+More screencasts can be seen [here](https://github.com/carlosrocha/vim-chrome-devtools/issues/1).
 
 ## Requirements
 
