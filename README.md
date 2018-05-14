@@ -3,6 +3,8 @@
 This plugin uses [chrome-remote-interface](https://github.com/cyrus-and/chrome-remote-interface)
 to connect to your Google Chrome instance.
 
+![CSS reload](https://user-images.githubusercontent.com/312351/39974298-73a352ea-56ed-11e8-88a3-9e4846ac6cae.gif)
+
 ## Requirements
 
 - Google Chrome with open remote debugging port. You can find setup instructions [here](https://chromedevtools.github.io/devtools-protocol/).
