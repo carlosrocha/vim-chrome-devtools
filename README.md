@@ -9,10 +9,11 @@ More screencasts can be seen [here](https://github.com/carlosrocha/vim-chrome-de
 
 ## Requirements
 
-- Google Chrome with open remote debugging port. You can find setup instructions [here](https://chromedevtools.github.io/devtools-protocol/).
+- Google Chrome with open remote debugging port using flag `--remote-debugging-port=9222`. You can find setup instructions [here](https://chromedevtools.github.io/devtools-protocol/).
 - [Neovim](https://neovim.io) 0.2.2 for Node.js remote plugin support.
+- [Neovim Node.js provider](https://github.com/neovim/node-client).
 - [Node.js](https://nodejs.org)
-- [FZF](https://github.com/junegunn/fzf.vim)
+- [FZF (optional)](https://github.com/junegunn/fzf.vim)
 
 Tested on node 8.5.0 and Google Chrome 61.
 
