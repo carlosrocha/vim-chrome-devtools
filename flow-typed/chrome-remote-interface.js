@@ -320,18 +320,18 @@ declare module 'chrome-remote-interface' {
     description: string,
     title: string,
     url: string,
-    type: 'page' | 'service_worker',
+    type: 'page' | 'service_worker' | 'node',
   };
 
-  declare type ListOptions = {
+  declare type ConnectionOptions = {
     host?: string,
     port?: string,
     secure?: boolean,
   };
 
   declare type CDP = {
-    (options: { target?: string }): Promise<Chrome>,
-    List(options?: ListOptions): Promise<TargetEntry[]>,
+    (options: { target?: string } & ConnectionOptions): Promise<Chrome>,
+    List(options?: ConnectionOptions): Promise<TargetEntry[]>,
     Activate(options: { id: string }): Promise<void>,
   };
 

@@ -1,7 +1,7 @@
 {
   "main": "lib/ChromeDevToolsPlugin.js",
   "scripts": {
-    "build": "babel src --out-dir lib",
+    "build": "babel src --out-dir lib -s",
     "precommit": "lint-staged",
     "start": "npm run build -- --watch",
     "test": "flow check"

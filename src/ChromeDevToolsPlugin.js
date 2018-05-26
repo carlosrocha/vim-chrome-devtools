@@ -1,6 +1,6 @@
 // @flow
 
-import CDP, { type Chrome } from 'chrome-remote-interface';
+import CDP, { type Chrome, type Script } from 'chrome-remote-interface';
 import { type NeovimPlugin, type NeovimClient } from 'neovim';
 
 import { getVisualSelection, debounce } from './utils';
@@ -14,6 +14,7 @@ export default class ChromeDevToolsPlugin {
   _plugin: NeovimPlugin;
   _nvim: NeovimClient;
   _chrome: Chrome;
+  _scripts: Script[];
 
   constructor(plugin: NeovimPlugin) {
     this._plugin = plugin;
@@ -52,6 +53,16 @@ export default class ChromeDevToolsPlugin {
     return this._nvim.command(`echomsg "${msg}"`);
   }
 
+  async _getDefaultOptions() {
+    const port = await this._nvim.getVar(portVarName);
+    const host = await this._nvim.getVar(hostVarName);
+
+    return {
+      host: host ? host : defaultHost,
+      port: port ? port : defaultPort,
+    };
+  }
+
   listOrConnect = (args: string[]) => {
     if (args.length == 0) {
       this.list();
@@ -62,19 +73,23 @@ export default class ChromeDevToolsPlugin {
   };
 
   list = async () => {
-    const port = await this._nvim.getVar(portVarName);
-    const host = await this._nvim.getVar(hostVarName);
-    const targets = await CDP.List({
-      host: host ? host : defaultHost,
-      port: port ? port : defaultPort,
-    });
+    let targets;
+    try {
+      targets = await CDP.List(await this._getDefaultOptions());
+    } catch (e) {
+      this.echoerr(e.message);
+    }
 
-    const labels = targets
-      .filter(target => target.type == 'page')
-      .map(({ id, title, url }) => `${id}: ${title} - ${url}`);
+    if (!targets) {
+      return;
+    }
+
+    const labels = targets.map(
+      ({ id, title, url }) => `${id}: ${title} - ${url}`,
+    );
 
     if (labels.length == 0) {
-      this.echomsg('No targets available');
+      this.echomsg('No targets available.');
     } else {
       await this._nvim.call('fzf#run', {
         down: '40%',
@@ -87,8 +102,14 @@ export default class ChromeDevToolsPlugin {
   };
 
   connect = async (target: string) => {
-    const chrome = await CDP({ target });
+    const defaultOptions = await this._getDefaultOptions();
+    const chrome = await CDP({ ...defaultOptions, target });
     this._chrome = chrome;
+
+    this._scripts = [];
+    chrome.Debugger.scriptParsed(script => {
+      this._scripts.push(script);
+    });
 
     await chrome.Page.enable();
     await chrome.DOM.enable();
@@ -117,10 +138,7 @@ export default class ChromeDevToolsPlugin {
     });
 
     if (result.exceptionDetails) {
-      console.error(result.exceptionDetails);
       this.echoerr(`Failed with message: ${result.exceptionDetails.text}`);
-    } else {
-      this.echomsg('OK');
     }
   };
 
