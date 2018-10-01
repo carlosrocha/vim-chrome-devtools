@@ -1,4 +1,6 @@
 declare module 'neovim' {
+  declare type VimValue = number | string | boolean | { [string]: any };
+
   declare type AutocmdOptions = {
     pattern?: string,
     sync?: boolean,
@@ -10,7 +12,7 @@ declare module 'neovim' {
   declare type FunctionOptions = {
     sync?: boolean,
     eval?: string,
-    range: boolean,
+    range?: boolean,
   };
 
   declare export function Plugin(args?: {
@@ -32,9 +34,9 @@ declare module 'neovim' {
 
   declare class BaseApi {
     data: string;
-    getVar(name: string): Promise<string>;
-    setVar(name: string, value: *): Promise<*>;
-    deleteVar(name: string): Promise<*>;
+    getVar(name: string): Promise<VimValue>;
+    setVar(name: string, value: VimValue): Promise<void>;
+    deleteVar(name: string): Promise<VimValue>;
   }
 
   declare type BufferSetLines = {
@@ -74,7 +76,7 @@ declare module 'neovim' {
     buffer: Promise<Buffer>;
     buffers: Promise<Buffer[]>;
     eval(args: string): Promise<string>;
-    call(fnName: string, args: any): Promise<void>;
+    call(fnName: string, args: VimValue | VimValue[]): Promise<void>;
     command(command: string): Promise<void>;
     input(keys: string): Promise<number>;
   }

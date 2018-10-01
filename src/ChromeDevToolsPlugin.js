@@ -3,12 +3,9 @@
 import CDP, { type Chrome, type Script } from 'chrome-remote-interface';
 import { type NeovimPlugin, type NeovimClient } from 'neovim';
 
+import JavaScriptPlugin from './plugins/JavaScriptPlugin';
 import { getVisualSelection, debounce } from './utils';
-
-const portVarName = 'ChromeDevTools_port';
-const hostVarName = 'ChromeDevTools_host';
-const defaultPort = '9222';
-const defaultHost = 'localhost';
+import { echomsg, echoerr } from './echo';
 
 export default class ChromeDevToolsPlugin {
   _plugin: NeovimPlugin;
@@ -16,19 +13,25 @@ export default class ChromeDevToolsPlugin {
   _chrome: Chrome;
   _scripts: Script[];
 
+  _js: JavaScriptPlugin;
+
   constructor(plugin: NeovimPlugin) {
     this._plugin = plugin;
     this._nvim = plugin.nvim;
 
-    plugin.registerFunction('ChromeDevTools_Page_reload', this.pageReload);
-    plugin.registerFunction(
-      'ChromeDevTools_Runtime_evaluate',
-      this.runtimeEvaluate,
-      { range: true },
-    );
+    process.on('uncaughtException', err => {
+      console.error(err);
+    });
+
+    this._js = new JavaScriptPlugin(plugin);
+
+    plugin.registerFunction('ChromeDevTools_Page_reload', this.pageReload, {
+      sync: false,
+    });
     plugin.registerFunction(
       'ChromeDevTools_CSS_createStyleSheet',
       this.cssCreateStyleSheet,
+      { sync: false },
     );
 
     plugin.registerCommand('ChromeDevToolsConnect', this.listOrConnect, {
@@ -45,21 +48,13 @@ export default class ChromeDevToolsPlugin {
     );
   }
 
-  echoerr(err: string) {
-    return this._nvim.command(`echohl Error | echomsg "${err}" | echohl None`);
-  }
-
-  echomsg(msg: string) {
-    return this._nvim.command(`echomsg "${msg}"`);
-  }
-
   async _getDefaultOptions() {
-    const port = await this._nvim.getVar(portVarName);
-    const host = await this._nvim.getVar(hostVarName);
+    const port = await this._nvim.getVar('ChromeDevTools_port');
+    const host = await this._nvim.getVar('ChromeDevTools_host');
 
     return {
-      host: host ? host : defaultHost,
-      port: port ? port : defaultPort,
+      host: host && typeof host == 'string' ? host : 'localhost',
+      port: port && typeof port == 'string' ? port : '9222',
     };
   }
 
@@ -77,7 +72,7 @@ export default class ChromeDevToolsPlugin {
     try {
       targets = await CDP.List(await this._getDefaultOptions());
     } catch (e) {
-      this.echoerr(e.message);
+      echoerr(this._nvim, e.message);
     }
 
     if (!targets) {
@@ -89,7 +84,7 @@ export default class ChromeDevToolsPlugin {
     );
 
     if (labels.length == 0) {
-      this.echomsg('No targets available.');
+      echomsg(this._nvim, 'No targets available.');
     } else {
       await this._nvim.call('fzf#run', {
         down: '40%',
@@ -106,6 +101,7 @@ export default class ChromeDevToolsPlugin {
     const chrome = await CDP({ ...defaultOptions, target });
     this._chrome = chrome;
 
+    this._js._chrome = chrome;
     this._scripts = [];
     chrome.Debugger.scriptParsed(script => {
       this._scripts.push(script);
@@ -118,28 +114,14 @@ export default class ChromeDevToolsPlugin {
     await chrome.Debugger.enable();
 
     chrome.once('disconnect', () => {
-      this.echomsg('Disconnected from target.');
+      echomsg(this._nvim, 'Disconnected from target.');
     });
 
-    this.echomsg('Connected to target: ' + target);
+    echomsg(this._nvim, 'Connected to target: ' + target);
   };
 
   pageReload = () => {
     this._chrome.Page.reload();
-  };
-
-  runtimeEvaluate = async (args: string[]) => {
-    const expression =
-      args.length > 0 ? args[0] : await getVisualSelection(this._nvim);
-
-    const result = await this._chrome.Runtime.evaluate({
-      expression,
-      generatePreview: true,
-    });
-
-    if (result.exceptionDetails) {
-      this.echoerr(`Failed with message: ${result.exceptionDetails.text}`);
-    }
   };
 
   cssCreateStyleSheet = async () => {
@@ -159,7 +141,7 @@ export default class ChromeDevToolsPlugin {
     const buffer = await this._nvim.buffer;
     const styleSheetId = await buffer.getVar('ChromeDevTools_styleSheetId');
 
-    if (!styleSheetId) {
+    if (!styleSheetId || typeof styleSheetId != 'string') {
       return;
     }
 
