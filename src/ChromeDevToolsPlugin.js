@@ -3,17 +3,15 @@
 import CDP, { type Chrome, type Script } from 'chrome-remote-interface';
 import { type NeovimPlugin, type NeovimClient } from 'neovim';
 
-import JavaScriptPlugin from './plugins/JavaScriptPlugin';
 import { getVisualSelection, debounce } from './utils';
 import { echomsg, echoerr } from './echo';
+
+const prefix = 'ChromeDevTools';
 
 export default class ChromeDevToolsPlugin {
   _plugin: NeovimPlugin;
   _nvim: NeovimClient;
   _chrome: Chrome;
-  _scripts: Script[];
-
-  _js: JavaScriptPlugin;
 
   constructor(plugin: NeovimPlugin) {
     this._plugin = plugin;
@@ -23,29 +21,18 @@ export default class ChromeDevToolsPlugin {
       console.error(err);
     });
 
-    this._js = new JavaScriptPlugin(plugin);
-
-    plugin.registerFunction('ChromeDevTools_Page_reload', this.pageReload, {
-      sync: false,
-    });
     plugin.registerFunction(
-      'ChromeDevTools_CSS_createStyleSheet',
+      `${prefix}_CSS_setStyleSheetText`,
+      this.cssSetStyleSheetText,
+    );
+    plugin.registerFunction(
+      `${prefix}_CSS_createStyleSheet`,
       this.cssCreateStyleSheet,
-      { sync: false },
     );
 
-    plugin.registerCommand('ChromeDevToolsConnect', this.listOrConnect, {
+    plugin.registerCommand(`${prefix}Connect`, this.connect, {
       nargs: '*',
     });
-
-    plugin.registerAutocmd('TextChanged', this.cssSetStyleSheetText, {
-      pattern: '*.css',
-    });
-    plugin.registerAutocmd(
-      'TextChangedI',
-      debounce(this.cssSetStyleSheetText, 200),
-      { pattern: '*.css' },
-    );
   }
 
   async _getDefaultOptions() {
@@ -58,70 +45,21 @@ export default class ChromeDevToolsPlugin {
     };
   }
 
-  listOrConnect = (args: string[]) => {
-    if (args.length == 0) {
-      this.list();
-    } else {
-      const [target] = args[0].split(':');
-      this.connect(target);
-    }
-  };
-
-  list = async () => {
-    let targets;
-    try {
-      targets = await CDP.List(await this._getDefaultOptions());
-    } catch (e) {
-      echoerr(this._nvim, e.message);
-    }
-
-    if (!targets) {
-      return;
-    }
-
-    const labels = targets.map(
-      ({ id, title, url }) => `${id}: ${title} - ${url}`,
-    );
-
-    if (labels.length == 0) {
-      echomsg(this._nvim, 'No targets available.');
-    } else {
-      await this._nvim.call('fzf#run', {
-        down: '40%',
-        sink: 'ChromeDevToolsConnect',
-        source: labels,
-      });
-      // Force focus on fzf.
-      await this._nvim.input('<c-m>');
-    }
-  };
-
-  connect = async (target: string) => {
+  connect = async (args: string[]) => {
+    const target = args[0];
     const defaultOptions = await this._getDefaultOptions();
     const chrome = await CDP({ ...defaultOptions, target });
     this._chrome = chrome;
 
-    this._js._chrome = chrome;
-    this._scripts = [];
-    chrome.Debugger.scriptParsed(script => {
-      this._scripts.push(script);
-    });
-
     await chrome.Page.enable();
     await chrome.DOM.enable();
     await chrome.CSS.enable();
-    await chrome.Runtime.enable();
-    await chrome.Debugger.enable();
 
     chrome.once('disconnect', () => {
       echomsg(this._nvim, 'Disconnected from target.');
     });
 
-    echomsg(this._nvim, 'Connected to target: ' + target);
-  };
-
-  pageReload = () => {
-    this._chrome.Page.reload();
+    echomsg(this._nvim, `Connected to target: ${target}`);
   };
 
   cssCreateStyleSheet = async () => {
@@ -130,9 +68,12 @@ export default class ChromeDevToolsPlugin {
     // Get the top level frame id.
     const { frameTree } = await chrome.Page.getResourceTree();
     const frameId = frameTree.frame.id;
-
     const { styleSheetId } = await chrome.CSS.createStyleSheet({ frameId });
+
     await nvim.command(`edit ${styleSheetId}.css`);
+    await nvim.command(
+      `au TextChanged <buffer> :call ${prefix}_CSS_setStyleSheetText()`,
+    );
     const buffer = await nvim.buffer;
     await buffer.setVar('ChromeDevTools_styleSheetId', styleSheetId);
   };
