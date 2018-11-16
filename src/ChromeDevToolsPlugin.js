@@ -21,19 +21,17 @@ export default class ChromeDevToolsPlugin {
       console.error(err);
     });
 
-    plugin.registerFunction(
-      `${prefix}_CSS_setStyleSheetText`,
-      this.cssSetStyleSheetText,
-    );
-    plugin.registerFunction(
-      `${prefix}_CSS_createStyleSheet`,
-      this.cssCreateStyleSheet,
-    );
-
-    plugin.registerCommand(`${prefix}Connect`, this.connect, {
-      nargs: '*',
-    });
+    plugin.registerFunction(`${prefix}_notify`, this.notify);
+    plugin.registerCommand(`${prefix}Connect`, this.connect, { nargs: '*' });
   }
+
+  notify = (args: string[]) => {
+    const command = args[0];
+
+    if (command == 'CSS/createStyleSheet') {
+      return this.cssCreateStyleSheet();
+    }
+  };
 
   async _getDefaultOptions() {
     const port = await this._nvim.getVar('ChromeDevTools_port');
@@ -71,21 +69,15 @@ export default class ChromeDevToolsPlugin {
     const { styleSheetId } = await chrome.CSS.createStyleSheet({ frameId });
 
     await nvim.command(`edit ${styleSheetId}.css`);
-    await nvim.command(
-      `au TextChanged <buffer> :call ${prefix}_CSS_setStyleSheetText()`,
-    );
     const buffer = await nvim.buffer;
-    await buffer.setVar('ChromeDevTools_styleSheetId', styleSheetId);
+
+    buffer.listen('lines', (bufn, changedTick, startLine, endLine) => {
+      this.cssSetStyleSheetText(styleSheetId);
+    });
   };
 
-  cssSetStyleSheetText = async () => {
+  cssSetStyleSheetText = async (styleSheetId: string) => {
     const buffer = await this._nvim.buffer;
-    const styleSheetId = await buffer.getVar('ChromeDevTools_styleSheetId');
-
-    if (!styleSheetId || typeof styleSheetId != 'string') {
-      return;
-    }
-
     const lines = await buffer.lines;
     const text = lines.join('\n');
     await this._chrome.CSS.setStyleSheetText({ styleSheetId, text });

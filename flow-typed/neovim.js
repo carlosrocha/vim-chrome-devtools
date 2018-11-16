@@ -51,6 +51,17 @@ declare module 'neovim' {
     mark(name: string): Promise<[number, number]>;
     getLines(params?: BufferSetLines): Promise<string[]>;
     setLines(lines: string[], args: BufferSetLines): Promise<void>;
+    listen(
+      'lines',
+      cb: (
+        bufn: number,
+        changedTick: number,
+        firstLine: number,
+        lastLine: number,
+        lines: string[],
+        more: boolean,
+      ) => void,
+    ): void;
   }
 
   declare export class NeovimPlugin {

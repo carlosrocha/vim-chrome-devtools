@@ -13,7 +13,6 @@ More screencasts can be seen [here](https://github.com/carlosrocha/vim-chrome-de
 - [Neovim](https://neovim.io) 0.2.2 for Node.js remote plugin support.
 - [Neovim Node.js provider](https://github.com/neovim/node-client).
 - [Node.js](https://nodejs.org)
-- [FZF (optional)](https://github.com/junegunn/fzf.vim)
 
 Tested on node 8.5.0 and Google Chrome 61.
 
@@ -34,10 +33,8 @@ After installing or updating you need to run `:UpdateRemotePlugins` and restart 
 
 ## Commands
 
-- `ChromeDevToolsConnect`
+- `ChromeDevToolsConnect <window_id>`
 
 ## Functions
 
-- `ChromeDevTools_Page_reload()`
-- `ChromeDevTools_Runtime_evaluate()`
 - `ChromeDevTools_CSS_createStyleSheet()`
