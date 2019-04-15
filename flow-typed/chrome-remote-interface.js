@@ -227,9 +227,9 @@ declare module 'chrome-remote-interface' {
       cb: ({ executionContextId: ExecutionContextId }) => void,
     ): void;
     executionContextsCleared(cb: () => void): void;
-    queryObjects(params: { prototypeObjectId: RemoteObjectId }): Promise<
-      RemoteObject,
-    >;
+    queryObjects(params: {
+      prototypeObjectId: RemoteObjectId,
+    }): Promise<RemoteObject>;
     releaseObjectGroup(params: { objectGroup: string }): Promise<void>;
     runIfWaitingForDebugger(): Promise<void>;
     runScript(params: {
