@@ -22,7 +22,7 @@ Tested on node 8.5.0 and Google Chrome 61.
 ### Using [vim-plug](https://github.com/junegunn/vim-plug)
 
 ```
-Plug 'carlosrocha/vim-chrome-devtools', { 'do': 'npm install && npm run build' }
+Plug 'carlosrocha/vim-chrome-devtools', { 'do': 'bash install.sh' }
 ```
 
 After installing or updating you need to run `:UpdateRemotePlugins` and restart Neovim.

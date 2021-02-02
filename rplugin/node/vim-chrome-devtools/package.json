@@ -2,14 +2,7 @@
   "main": "lib/ChromeDevToolsPlugin.js",
   "scripts": {
     "build": "babel src --out-dir lib -s",
-    "precommit": "lint-staged",
     "start": "npm run build -- --watch"
-  },
-  "lint-staged": {
-    "*.js": [
-      "prettier --write",
-      "git add"
-    ]
   },
   "dependencies": {
     "chrome-remote-interface": "^0.29.0"
@@ -18,13 +11,6 @@
     "@babel/cli": "^7.12.10",
     "@babel/core": "^7.12.10",
     "@babel/plugin-proposal-class-properties": "^7.12.1",
-    "@babel/preset-env": "^7.12.11",
-    "husky": "^4.3.8",
-    "lint-staged": "^10.5.3",
-    "prettier": "^2.2.1"
-  },
-  "prettier": {
-    "singleQuote": true,
-    "trailingComma": "all"
+    "@babel/preset-env": "^7.12.11"
   }
 }
