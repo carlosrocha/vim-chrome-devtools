@@ -1,15 +1,11 @@
-// @flow
-
-import { type NeovimClient } from 'neovim';
-
-export function echoerr(nvim: NeovimClient, msg: string) {
+export function echoerr(nvim, msg) {
   return nvim.command(`echohl Error | echomsg "${msg}" | echohl None`);
 }
 
-export function echowarn(nvim: NeovimClient, msg: string) {
+export function echowarn(nvim, msg) {
   return nvim.command(`echohl WarningMsg | echomsg "${msg}" | echohl None`);
 }
 
-export function echomsg(nvim: NeovimClient, msg: string) {
+export function echomsg(nvim, msg) {
   return nvim.command(`echomsg "${msg}"`);
 }

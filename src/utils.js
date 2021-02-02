@@ -1,11 +1,7 @@
-// @flow
-
-import { type NeovimClient } from 'neovim';
-
-export const debounce = (fn: (...params: *) => *, timeout: number) => {
+export const debounce = (fn, timeout) => {
   let timeoutId;
 
-  return (...params: *) => {
+  return (...params) => {
     if (timeoutId) {
       clearTimeout(timeoutId);
     }
@@ -17,7 +13,7 @@ export const debounce = (fn: (...params: *) => *, timeout: number) => {
   };
 };
 
-export async function getVisualSelection(nvim: NeovimClient) {
+export async function getVisualSelection(nvim) {
   const buffer = await nvim.buffer;
   const [startLine, startCol] = await buffer.mark('<');
   const [endLine, endCol] = await buffer.mark('>');

@@ -1,21 +1,11 @@
-// @flow
-
-import CDP, { type Chrome, type Script } from 'chrome-remote-interface';
-import { type NeovimPlugin, type NeovimClient } from 'neovim';
+import CDP from 'chrome-remote-interface';
 
 import JavaScriptPlugin from './plugins/JavaScriptPlugin';
 import { getVisualSelection, debounce } from './utils';
 import { echomsg, echoerr } from './echo';
 
 export default class ChromeDevToolsPlugin {
-  _plugin: NeovimPlugin;
-  _nvim: NeovimClient;
-  _chrome: Chrome;
-  _scripts: Script[];
-
-  _js: JavaScriptPlugin;
-
-  constructor(plugin: NeovimPlugin) {
+  constructor(plugin) {
     this._plugin = plugin;
     this._nvim = plugin.nvim;
 
@@ -58,7 +48,7 @@ export default class ChromeDevToolsPlugin {
     };
   }
 
-  listOrConnect = (args: string[]) => {
+  listOrConnect = (args) => {
     if (args.length == 0) {
       this.list();
     } else {
@@ -96,7 +86,7 @@ export default class ChromeDevToolsPlugin {
     }
   };
 
-  connect = async (target: string) => {
+  connect = async (target) => {
     const defaultOptions = await this._getDefaultOptions();
     const chrome = await CDP({ ...defaultOptions, target });
     this._chrome = chrome;
