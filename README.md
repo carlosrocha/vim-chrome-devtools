@@ -1,3 +1,5 @@
+Archived: A pure Lua version of this is available on https://github.com/carlosrocha/chrome-remote.nvim
+
 # vim-chrome-devtools
 
 This plugin uses [chrome-remote-interface](https://github.com/cyrus-and/chrome-remote-interface)
